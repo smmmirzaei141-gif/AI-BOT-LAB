@@ -1,0 +1,240 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+set -u
+
+LAB_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECTS_DIR="$LAB_DIR/projects"
+
+usage() {
+    cat <<USAGE
+
+AI-BOT-LAB V1
+
+Usage:
+  ./scripts/lab <command> [arguments]
+
+Commands:
+  doctor
+  status
+  list
+  create <name> <type>
+  backup
+  help
+
+Types:
+  python
+  node
+  android
+  shell
+  generic
+
+Examples:
+  ./scripts/lab doctor
+  ./scripts/lab list
+  ./scripts/lab create my-bot python
+  ./scripts/lab status
+  ./scripts/lab backup
+
+USAGE
+}
+
+doctor() {
+    "$LAB_DIR/scripts/lab-doctor.sh"
+}
+
+status() {
+    cd "$LAB_DIR" || exit 1
+
+    echo "================================"
+    echo "       AI-BOT-LAB STATUS"
+    echo "================================"
+    echo
+
+    echo "Branch: $(git branch --show-current)"
+    echo "Remote: $(git remote get-url origin 2>/dev/null || echo NOT_SET)"
+    echo
+
+    echo "Latest commit:"
+    git log -1 --oneline
+
+    echo
+    echo "Working tree:"
+    if git diff --quiet && git diff --cached --quiet && [ -z "$(git status --porcelain)" ]; then
+        echo "[CLEAN]"
+    else
+        git status --short
+    fi
+
+    echo
+    echo "Projects:"
+    found=0
+
+    for dir in "$PROJECTS_DIR"/*; do
+        if [ -d "$dir" ]; then
+            found=1
+            echo "  - $(basename "$dir")"
+        fi
+    done
+
+    [ "$found" -eq 0 ] && echo "  (none)"
+}
+
+list_projects() {
+    echo "AI-BOT-LAB PROJECTS"
+    echo "==================="
+
+    found=0
+
+    for dir in "$PROJECTS_DIR"/*; do
+        if [ -d "$dir" ]; then
+            found=1
+            name="$(basename "$dir")"
+
+            if [ -f "$dir/PROJECT.md" ]; then
+                type="$(grep '^Type:' "$dir/PROJECT.md" 2>/dev/null | head -n 1 | sed 's/^Type:[[:space:]]*//')"
+            else
+                type="unknown"
+            fi
+
+            printf "%-25s %s\n" "$name" "$type"
+        fi
+    done
+
+    [ "$found" -eq 0 ] && echo "(none)"
+}
+
+create_project() {
+    NAME="${1:-}"
+    TYPE="${2:-}"
+
+    if [ -z "$NAME" ] || [ -z "$TYPE" ]; then
+        echo "ERROR: name and type are required."
+        usage
+        exit 1
+    fi
+
+    case "$NAME" in
+        *[!a-zA-Z0-9._-]*)
+            echo "ERROR: invalid project name."
+            echo "Use letters, numbers, dot, dash or underscore."
+            exit 1
+            ;;
+    esac
+
+    case "$TYPE" in
+        python|node|android|shell|generic)
+            ;;
+        *)
+            echo "ERROR: unsupported project type: $TYPE"
+            exit 1
+            ;;
+    esac
+
+    TARGET="$PROJECTS_DIR/$NAME"
+
+    if [ -e "$TARGET" ]; then
+        echo "ERROR: project already exists: $NAME"
+        exit 1
+    fi
+
+    mkdir -p "$TARGET"
+
+    cat > "$TARGET/PROJECT.md" <<EOT
+# $NAME
+
+Type: $TYPE
+
+Created by AI-BOT-LAB.
+
+## Status
+Development
+
+## Notes
+EOT
+
+    case "$TYPE" in
+        python)
+            mkdir -p "$TARGET/src" "$TARGET/tests" "$TARGET/config"
+            touch "$TARGET/src/.gitkeep"
+            touch "$TARGET/tests/.gitkeep"
+            printf '' > "$TARGET/requirements.txt"
+            ;;
+
+        node)
+            mkdir -p "$TARGET/src" "$TARGET/tests"
+            cat > "$TARGET/package.json" <<EOT
+{
+  "name": "$NAME",
+  "version": "0.1.0",
+  "private": true
+}
+EOT
+            ;;
+
+        android)
+            mkdir -p "$TARGET/app"
+            ;;
+
+        shell)
+            mkdir -p "$TARGET/scripts" "$TARGET/tests"
+            ;;
+
+        generic)
+            mkdir -p "$TARGET/src" "$TARGET/tests" "$TARGET/docs"
+            ;;
+    esac
+
+    echo
+    echo "[CREATED]"
+    echo "Name: $NAME"
+    echo "Type: $TYPE"
+    echo "Path: $TARGET"
+}
+
+backup() {
+    cd "$LAB_DIR" || exit 1
+
+    git add .
+
+    if git diff --cached --quiet; then
+        echo "[BACKUP] Nothing new to commit."
+        exit 0
+    fi
+
+    git commit -m "AI-BOT-LAB backup"
+    git push
+}
+
+COMMAND="${1:-help}"
+
+case "$COMMAND" in
+    doctor)
+        doctor
+        ;;
+
+    status)
+        status
+        ;;
+
+    list)
+        list_projects
+        ;;
+
+    create)
+        create_project "${2:-}" "${3:-}"
+        ;;
+
+    backup)
+        backup
+        ;;
+
+    help|-h|--help)
+        usage
+        ;;
+
+    *)
+        echo "ERROR: unknown command: $COMMAND"
+        usage
+        exit 1
+        ;;
+esac

@@ -88,7 +88,7 @@ android_install_apk() {
     echo "=== INSTALL APK ==="
     echo "APK: $apk"
 
-    adb install -r "$apk"
+    android_adb install -r "$apk"
 }
 
 android_get_package() {
@@ -121,7 +121,7 @@ android_run() {
     if ! adb get-state >/dev/null 2>&1; then
         echo "[ERROR] No Android device connected."
         echo
-        adb devices
+    android_adb devices
         return 1
     fi
 
@@ -137,7 +137,7 @@ android_run() {
     fi
 
     echo "Activity: $activity"
-    adb shell am start -n "$activity"
+    android_adb shell am start -n "$activity"
 }
 
 android_stop() {
@@ -154,7 +154,7 @@ android_stop() {
     echo "=== ANDROID STOP ==="
     echo "Package: $package"
 
-    adb shell am force-stop "$package"
+    android_adb shell am force-stop "$package"
 }
 
 android_logs() {
@@ -167,12 +167,12 @@ android_logs() {
         package="$(android_get_package "$project")"
 
         if [ -n "$package" ]; then
-            adb logcat -d -t 300 | grep "$package" || true
+    android_adb logcat -d -t 300 | grep "$package" || true
             return 0
         fi
     fi
 
-    adb logcat -d -t 300
+    android_adb logcat -d -t 300
 }
 
 android_run_all() {

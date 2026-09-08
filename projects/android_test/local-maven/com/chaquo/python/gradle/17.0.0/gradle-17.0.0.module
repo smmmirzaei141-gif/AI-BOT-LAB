@@ -1,0 +1,120 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.chaquo.python",
+    "module": "gradle",
+    "version": "17.0.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.0.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.localToProject": "public",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "gradle-17.0.0.jar",
+          "url": "gradle-17.0.0.jar",
+          "size": 2117830,
+          "sha512": "e9f46523d4ec65ba2335e467337381185e2a410f3480c3f37d1298fc9eb0001b1044be81cd780733701ef0eafc0e354891edd14c1056ad240de4c5dd1f0b37d7",
+          "sha256": "c528cf01779de16db9068b31ca3cdfd79db8c1e7dd2a76635d111656147780c5",
+          "sha1": "53cad602b9434e7f9ee502fa7987538663a3cd7e",
+          "md5": "b3c86ac10ffb8ee638de7d4a0f4d6121"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.localToProject": "public",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.apache.commons",
+          "module": "commons-compress",
+          "version": {
+            "requires": "1.18"
+          }
+        },
+        {
+          "group": "org.json",
+          "module": "json",
+          "version": {
+            "requires": "20160810"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "gradle-17.0.0.jar",
+          "url": "gradle-17.0.0.jar",
+          "size": 2117830,
+          "sha512": "e9f46523d4ec65ba2335e467337381185e2a410f3480c3f37d1298fc9eb0001b1044be81cd780733701ef0eafc0e354891edd14c1056ad240de4c5dd1f0b37d7",
+          "sha256": "c528cf01779de16db9068b31ca3cdfd79db8c1e7dd2a76635d111656147780c5",
+          "sha1": "53cad602b9434e7f9ee502fa7987538663a3cd7e",
+          "md5": "b3c86ac10ffb8ee638de7d4a0f4d6121"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gradle-17.0.0-javadoc.jar",
+          "url": "gradle-17.0.0-javadoc.jar",
+          "size": 307650,
+          "sha512": "ef67b6c75d30b555ea249b9b809108647ebc2588954bbe499d299377e0010946a2f2f6390d9a6f6440d2af6d0068d55d289c11878b47c6f4dcfd5c6f8b99600f",
+          "sha256": "1af8c82c6d2e00aa1a383cebf428ef20344de3c002d84865db51de9ed033b4b6",
+          "sha1": "d86f665056093d1f80547685f6e8afb56a265e66",
+          "md5": "b8f9145b6acaf23192ab7aceafa589be"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gradle-17.0.0-sources.jar",
+          "url": "gradle-17.0.0-sources.jar",
+          "size": 174978,
+          "sha512": "b55c7456f082268dd268f6aba708a456ae2abeedd65d3c3f58b30e01eceb69f7338c8df39c9fde355e1c8040aaccf929fa7d9ae6708a36dab13870cd27e37f6e",
+          "sha256": "c4e7286bdd7e42cd33d81931d7657f996d157900c142c38a0804aac4822884b6",
+          "sha1": "ac1de753985da38a62c8b88aa6ea9ec5178b2b24",
+          "md5": "2d793ff130dfc90f42e64d07f1669741"
+        }
+      ]
+    }
+  ]
+}

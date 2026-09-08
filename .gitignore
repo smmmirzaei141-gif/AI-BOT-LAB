@@ -12,3 +12,10 @@ node_modules/
 dist/
 build/
 *.log
+
+# Android/Gradle generated files
+.gradle/
+**/.gradle/
+**/build/
+*.apk
+*.aab

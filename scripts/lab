@@ -5,21 +5,42 @@ set -u
 LAB_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECTS_DIR="$LAB_DIR/projects"
 
+export LAB_DIR
+export PROJECTS_DIR
+
+# Core libraries
+source "$LAB_DIR/scripts/lib/project.sh"
+source "$LAB_DIR/scripts/lib/registry.sh"
+source "$LAB_DIR/scripts/lib/process.sh"
+
+# Handlers
+[ -f "$LAB_DIR/scripts/handlers/python.sh" ] && source "$LAB_DIR/scripts/handlers/python.sh"
+[ -f "$LAB_DIR/scripts/handlers/node.sh" ] && source "$LAB_DIR/scripts/handlers/node.sh"
+[ -f "$LAB_DIR/scripts/handlers/shell.sh" ] && source "$LAB_DIR/scripts/handlers/shell.sh"
+[ -f "$LAB_DIR/scripts/handlers/android.sh" ] && source "$LAB_DIR/scripts/handlers/android.sh"
+
 usage() {
     cat <<USAGE
-
-AI-BOT-LAB V1
+AI-BOT-LAB V2
 
 Usage:
-  ./scripts/lab <command> [arguments]
+  ./scripts/lab <command> [project]
 
-Commands:
+Core:
   doctor
   status
   list
   create <name> <type>
   backup
-  help
+
+Project actions:
+  install <project>
+  test <project>
+  build <project>
+  run <project>
+  stop <project>
+  logs <project>
+  clean <project>
 
 Types:
   python
@@ -27,14 +48,6 @@ Types:
   android
   shell
   generic
-
-Examples:
-  ./scripts/lab doctor
-  ./scripts/lab list
-  ./scripts/lab create my-bot python
-  ./scripts/lab status
-  ./scripts/lab backup
-
 USAGE
 }
 
@@ -43,23 +56,23 @@ doctor() {
 }
 
 status() {
-    cd "$LAB_DIR" || exit 1
+    cd "$LAB_DIR" || return 1
 
     echo "================================"
     echo "       AI-BOT-LAB STATUS"
     echo "================================"
     echo
-
-    echo "Branch: $(git branch --show-current)"
+    echo "Branch: $(git branch --show-current 2>/dev/null || echo UNKNOWN)"
     echo "Remote: $(git remote get-url origin 2>/dev/null || echo NOT_SET)"
     echo
-
     echo "Latest commit:"
-    git log -1 --oneline
-
+    git log -1 --oneline 2>/dev/null || true
     echo
     echo "Working tree:"
-    if git diff --quiet && git diff --cached --quiet && [ -z "$(git status --porcelain)" ]; then
+
+    if git diff --quiet &&
+       git diff --cached --quiet &&
+       [ -z "$(git status --porcelain)" ]; then
         echo "[CLEAN]"
     else
         git status --short
@@ -67,7 +80,7 @@ status() {
 
     echo
     echo "Projects:"
-    found=0
+    local found=0
 
     for dir in "$PROJECTS_DIR"/*; do
         if [ -d "$dir" ]; then
@@ -83,15 +96,20 @@ list_projects() {
     echo "AI-BOT-LAB PROJECTS"
     echo "==================="
 
-    found=0
+    local found=0
 
     for dir in "$PROJECTS_DIR"/*; do
         if [ -d "$dir" ]; then
             found=1
+            local name
+            local type
+
             name="$(basename "$dir")"
 
             if [ -f "$dir/PROJECT.md" ]; then
-                type="$(grep '^Type:' "$dir/PROJECT.md" 2>/dev/null | head -n 1 | sed 's/^Type:[[:space:]]*//')"
+                type="$(grep '^Type:' "$dir/PROJECT.md" 2>/dev/null |
+                    head -n 1 |
+                    sed 's/^Type:[[:space:]]*//')"
             else
                 type="unknown"
             fi
@@ -104,46 +122,42 @@ list_projects() {
 }
 
 create_project() {
-    NAME="${1:-}"
-    TYPE="${2:-}"
+    local name="${1:-}"
+    local type="${2:-}"
 
-    if [ -z "$NAME" ] || [ -z "$TYPE" ]; then
+    if [ -z "$name" ] || [ -z "$type" ]; then
         echo "ERROR: name and type are required."
         usage
-        exit 1
+        return 1
     fi
 
-    case "$NAME" in
-        *[!a-zA-Z0-9._-]*)
-            echo "ERROR: invalid project name."
-            echo "Use letters, numbers, dot, dash or underscore."
-            exit 1
-            ;;
-    esac
+    if ! validate_project_name "$name"; then
+        echo "ERROR: invalid project name."
+        return 1
+    fi
 
-    case "$TYPE" in
+    case "$type" in
         python|node|android|shell|generic)
             ;;
         *)
-            echo "ERROR: unsupported project type: $TYPE"
-            exit 1
+            echo "ERROR: unsupported project type: $type"
+            return 1
             ;;
     esac
 
-    TARGET="$PROJECTS_DIR/$NAME"
+    local target="$PROJECTS_DIR/$name"
 
-    if [ -e "$TARGET" ]; then
-        echo "ERROR: project already exists: $NAME"
-        exit 1
+    if [ -e "$target" ]; then
+        echo "ERROR: project already exists: $name"
+        return 1
     fi
 
-    mkdir -p "$TARGET"
+    mkdir -p "$target"
 
-    cat > "$TARGET/PROJECT.md" <<EOT
-# $NAME
+    cat > "$target/PROJECT.md" <<EOT
+# $name
 
-Type: $TYPE
-
+Type: $type
 Created by AI-BOT-LAB.
 
 ## Status
@@ -152,19 +166,19 @@ Development
 ## Notes
 EOT
 
-    case "$TYPE" in
+    case "$type" in
         python)
-            mkdir -p "$TARGET/src" "$TARGET/tests" "$TARGET/config"
-            touch "$TARGET/src/.gitkeep"
-            touch "$TARGET/tests/.gitkeep"
-            printf '' > "$TARGET/requirements.txt"
+            mkdir -p "$target/src" "$target/tests" "$target/config"
+            touch "$target/src/.gitkeep"
+            touch "$target/tests/.gitkeep"
+            : > "$target/requirements.txt"
             ;;
 
         node)
-            mkdir -p "$TARGET/src" "$TARGET/tests"
-            cat > "$TARGET/package.json" <<EOT
+            mkdir -p "$target/src" "$target/tests"
+            cat > "$target/package.json" <<EOT
 {
-  "name": "$NAME",
+  "name": "$name",
   "version": "0.1.0",
   "private": true
 }
@@ -172,37 +186,94 @@ EOT
             ;;
 
         android)
-            mkdir -p "$TARGET/app"
+            mkdir -p "$target/app"
             ;;
 
         shell)
-            mkdir -p "$TARGET/scripts" "$TARGET/tests"
+            mkdir -p "$target/scripts" "$target/tests"
             ;;
 
         generic)
-            mkdir -p "$TARGET/src" "$TARGET/tests" "$TARGET/docs"
+            mkdir -p "$target/src" "$target/tests" "$target/docs"
             ;;
     esac
 
     echo
     echo "[CREATED]"
-    echo "Name: $NAME"
-    echo "Type: $TYPE"
-    echo "Path: $TARGET"
+    echo "Name: $name"
+    echo "Type: $type"
+    echo "Path: $target"
+}
+
+project_action() {
+    local action="$1"
+    local project="${2:-}"
+
+    if [ -z "$project" ]; then
+        echo "ERROR: project name required."
+        echo "Usage: ./scripts/lab $action <project>"
+        return 1
+    fi
+
+    if ! project_exists "$project"; then
+        echo "[ERROR] Project not found: $project"
+        return 1
+    fi
+
+    local type
+    type="$(project_type "$project")"
+
+    case "$type" in
+        android)
+            case "$action" in
+                install) android_install_apk "$project" ;;
+                test)    android_test "$project" ;;
+                build)   android_build "$project" ;;
+                run)     android_run "$project" ;;
+                stop)    android_stop "$project" ;;
+                logs)    android_logs "$project" ;;
+                clean)   android_clean "$project" ;;
+                *)
+                    echo "[ERROR] Unsupported Android action: $action"
+                    return 1
+                    ;;
+            esac
+            ;;
+
+        python)
+            echo "[INFO] Python handler action: $action"
+            echo "[INFO] Project: $project"
+            ;;
+
+        node)
+            echo "[INFO] Node handler action: $action"
+            echo "[INFO] Project: $project"
+            ;;
+
+        shell)
+            echo "[INFO] Shell handler action: $action"
+            echo "[INFO] Project: $project"
+            ;;
+
+        *)
+            echo "[ERROR] No handler for project type: $type"
+            return 1
+            ;;
+    esac
 }
 
 backup() {
-    cd "$LAB_DIR" || exit 1
+    cd "$LAB_DIR" || return 1
 
     git add .
 
     if git diff --cached --quiet; then
         echo "[BACKUP] Nothing new to commit."
-        exit 0
+        return 0
     fi
 
     git commit -m "AI-BOT-LAB backup"
-    git push
+    git push origin main
 }
 
 COMMAND="${1:-help}"
@@ -222,6 +293,10 @@ case "$COMMAND" in
 
     create)
         create_project "${2:-}" "${3:-}"
+        ;;
+
+    install|test|build|run|stop|logs|clean)
+        project_action "$COMMAND" "${2:-}"
         ;;
 
     backup)

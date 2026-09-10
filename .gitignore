@@ -19,3 +19,8 @@ build/
 **/build/
 *.apk
 *.aab
+
+# AI-BOT-LAB runtime data
+.runtime/
+projects/btc_bot/config/*.json
+projects/btc_bot/config/*.jsonl

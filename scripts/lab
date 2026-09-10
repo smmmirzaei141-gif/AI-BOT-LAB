@@ -17,6 +17,7 @@ source "$LAB_DIR/scripts/lib/process.sh"
 [ -f "$LAB_DIR/scripts/handlers/python.sh" ] && source "$LAB_DIR/scripts/handlers/python.sh"
 [ -f "$LAB_DIR/scripts/handlers/node.sh" ] && source "$LAB_DIR/scripts/handlers/node.sh"
 [ -f "$LAB_DIR/scripts/handlers/shell.sh" ] && source "$LAB_DIR/scripts/handlers/shell.sh"
+[ -f "$LAB_DIR/scripts/handlers/generic.sh" ] && source "$LAB_DIR/scripts/handlers/generic.sh"
 [ -f "$LAB_DIR/scripts/handlers/android.sh" ] && source "$LAB_DIR/scripts/handlers/android.sh"
 
 usage() {
@@ -90,6 +91,7 @@ status() {
     done
 
     [ "$found" -eq 0 ] && echo "  (none)"
+    return 0
 }
 
 list_projects() {
@@ -285,6 +287,22 @@ project_action() {
                     ;;
                 *)
                     echo "[ERROR] Unsupported Shell action: $action"
+                    return 1
+                    ;;
+            esac
+            ;;
+
+        generic)
+            case "$action" in
+                install) generic_install "$project" ;;
+                test)    generic_test "$project" ;;
+                build)   generic_build "$project" ;;
+                run)     generic_run "$project" ;;
+                stop)    generic_stop "$project" ;;
+                logs)    generic_logs "$project" ;;
+                clean)   generic_clean "$project" ;;
+                *)
+                    echo "[ERROR] Unsupported Generic action: $action"
                     return 1
                     ;;
             esac

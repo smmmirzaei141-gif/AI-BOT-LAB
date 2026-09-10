@@ -1,0 +1,41 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -u
+LAB_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECTS_DIR="$LAB_DIR/projects"
+source "$LAB_DIR/scripts/lib/project.sh"
+source "$LAB_DIR/scripts/lib/process.sh"
+
+case "${1:-help}" in
+  check)
+    p="${2:-}"
+    [ -d "$PROJECTS_DIR/$p" ] || { echo "[ERROR] Project not found"; exit 1; }
+    echo "=== CHECK: $p ==="
+    find "$PROJECTS_DIR/$p" -type f -name '*.py' -print0 |
+      xargs -0 -r -n1 python -m py_compile
+    find "$PROJECTS_DIR/$p" -type f \( -name '*.sh' -o -name '*.bash' \) -print0 |
+      xargs -0 -r -n1 bash -n
+    echo "[OK] CHECK PASSED"
+    ;;
+  snapshot)
+    p="${2:-}"
+    [ -d "$PROJECTS_DIR/$p" ] || { echo "[ERROR] Project not found"; exit 1; }
+    {
+      echo "# $p Snapshot"
+      echo
+      echo "Generated: $(date '+%Y-%m-%d %H:%M:%S')"
+      echo "Type: $(project_type "$p")"
+      echo
+      echo "## Files"
+      find "$PROJECTS_DIR/$p" -maxdepth 3 -type f | sort
+    } > "$PROJECTS_DIR/$p/PROJECT_SNAPSHOT.md"
+    echo "[OK] SNAPSHOT CREATED"
+    ;;
+  init)
+    "$0" check "$2" && "$0" snapshot "$2"
+    echo "[READY] $2"
+    ;;
+  *)
+    echo "Usage: ./scripts/labx {check|snapshot|init} <project>"
+    exit 1
+    ;;
+esac

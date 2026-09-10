@@ -24,3 +24,4 @@ build/
 .runtime/
 projects/btc_bot/config/*.json
 projects/btc_bot/config/*.jsonl
+scripts/lab.before_factory_upgrade

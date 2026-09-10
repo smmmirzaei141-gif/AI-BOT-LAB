@@ -235,18 +235,59 @@ project_action() {
             ;;
 
         python)
-            echo "[INFO] Python handler action: $action"
-            echo "[INFO] Project: $project"
+            case "$action" in
+                install) python_install "$project" ;;
+                test)    python_test "$project" ;;
+                run)     python_run "$project" ;;
+                stop)    python_stop "$project" ;;
+                logs)    python_logs "$project" ;;
+                clean)
+                    rm -rf "$PROJECTS_DIR/$project/__pycache__" \
+                           "$PROJECTS_DIR/$project/.pytest_cache"
+                    echo "[CLEANED] $project"
+                    ;;
+                *)
+                    echo "[ERROR] Unsupported Python action: $action"
+                    return 1
+                    ;;
+            esac
             ;;
 
         node)
-            echo "[INFO] Node handler action: $action"
-            echo "[INFO] Project: $project"
+            case "$action" in
+                install) node_install "$project" ;;
+                test)    node_test "$project" ;;
+                run)     node_run "$project" ;;
+                stop)    node_stop "$project" ;;
+                logs)    node_logs "$project" ;;
+                clean)
+                    rm -rf "$PROJECTS_DIR/$project/node_modules"
+                    echo "[CLEANED] $project"
+                    ;;
+                *)
+                    echo "[ERROR] Unsupported Node action: $action"
+                    return 1
+                    ;;
+            esac
             ;;
 
         shell)
-            echo "[INFO] Shell handler action: $action"
-            echo "[INFO] Project: $project"
+            case "$action" in
+                install) shell_install "$project" ;;
+                test)    shell_test "$project" ;;
+                run)     shell_run "$project" ;;
+                stop)    shell_stop "$project" ;;
+                logs)    shell_logs "$project" ;;
+                clean)
+                    find "$PROJECTS_DIR/$project" -type f \
+                        \( -name '*.log' -o -name '*.tmp' \) -delete
+                    echo "[CLEANED] $project"
+                    ;;
+                *)
+                    echo "[ERROR] Unsupported Shell action: $action"
+                    return 1
+                    ;;
+            esac
             ;;
 
         *)

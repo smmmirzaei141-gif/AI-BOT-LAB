@@ -38,6 +38,22 @@ def candles():
         for x in d if int(x["T"])+3600000 <= now
     ]
 
+def market_context():
+    meta, ctxs = api({"type":"metaAndAssetCtxs"})
+    i=next(i for i,x in enumerate(meta["universe"]) if x["name"]==COIN)
+    ctx=ctxs[i]
+    book=api({"type":"l2Book","coin":COIN})
+    bids=book["levels"][0]
+    asks=book["levels"][1]
+    bid_vol=sum(float(x["sz"]) for x in bids[:10])
+    ask_vol=sum(float(x["sz"]) for x in asks[:10])
+    return {
+        "funding":float(ctx.get("funding",0)),
+        "open_interest":float(ctx.get("openInterest",0)),
+        "mark_price":float(ctx.get("markPx",0)),
+        "book_imbalance":(bid_vol-ask_vol)/(bid_vol+ask_vol) if bid_vol+ask_vol else 0.0,
+    }
+
 def price():
     d=api({"type":"allMids"})
     return float(d[COIN])

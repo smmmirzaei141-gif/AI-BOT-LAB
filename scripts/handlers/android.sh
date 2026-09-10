@@ -118,7 +118,7 @@ android_run() {
     echo "=== ANDROID RUN ==="
     echo "Package: $package"
 
-    if ! adb get-state >/dev/null 2>&1; then
+    if ! android_adb get-state >/dev/null 2>&1; then
         echo "[ERROR] No Android device connected."
         echo
     android_adb devices
@@ -126,7 +126,7 @@ android_run() {
     fi
 
     local activity
-    activity="$(adb shell cmd package resolve-activity \
+    activity="$(android_adb shell cmd package resolve-activity \
         --brief "$package" 2>/dev/null |
         tail -n 1 |
         tr -d '\r')"

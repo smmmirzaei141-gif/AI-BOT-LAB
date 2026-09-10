@@ -106,13 +106,7 @@ list_projects() {
 
             name="$(basename "$dir")"
 
-            if [ -f "$dir/PROJECT.md" ]; then
-                type="$(grep '^Type:' "$dir/PROJECT.md" 2>/dev/null |
-                    head -n 1 |
-                    sed 's/^Type:[[:space:]]*//')"
-            else
-                type="unknown"
-            fi
+            type="$(project_type "$name")"
 
             printf "%-25s %s\n" "$name" "$type"
         fi

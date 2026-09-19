@@ -4,34 +4,33 @@ from math import log
 
 @dataclass(frozen=True)
 class CalibrationBin:
-    low: float
-    high: float
+    lower: float
+    upper: float
     count: int
-    mean_probability: float
-    observed_rate: float
+    predicted: float
+    observed: float
+    gap: float
 
-def calibration_bins(rows: list[dict], bins: int = 10) -> list[CalibrationBin]:
-    bins=max(2,int(bins))
-    groups=[[] for _ in range(bins)]
+@dataclass(frozen=True)
+class CalibrationReport:
+    bins: tuple[CalibrationBin, ...]
+    brier: float
+    log_loss: float
+
+def evaluate(rows, bins=10, eps=1e-9) -> CalibrationReport:
+    if bins < 1: raise ValueError("bins must be >= 1")
+    buckets=[[] for _ in range(bins)]
+    brier=logloss=0.0
     for r in rows:
-        p=min(1.0,max(0.0,float(r["predicted_probability"])))
+        p=min(1-eps,max(eps,float(r["model_probability"])))
         y=1.0 if bool(r["won"]) else 0.0
-        idx=min(bins-1,int(p*bins))
-        groups[idx].append((p,y))
+        idx=min(bins-1,int(p*bins)); buckets[idx].append((p,y))
+        brier+=(p-y)**2
+        logloss-=y*log(p)+(1-y)*log(1-p)
     out=[]
-    for i,g in enumerate(groups):
-        if not g: continue
-        out.append(CalibrationBin(i/bins,(i+1)/bins,len(g),sum(p for p,_ in g)/len(g),sum(y for _,y in g)/len(g)))
-    return out
-
-def expected_calibration_error(rows: list[dict], bins: int=10) -> float:
-    n=len(rows)
-    if not n: return 0.0
-    return sum((b.count/n)*abs(b.mean_probability-b.observed_rate) for b in calibration_bins(rows,bins))
-
-def market_breakdown(rows: list[dict]) -> dict[str, dict]:
-    out={}
-    for r in rows:
-        market=str(r.get("market","unknown"))
-        out.setdefault(market,[]).append(r)
-    return {m: {"count":len(rs),"ece":round(expected_calibration_error(rs),6)} for m,rs in out.items()}
+    for i,b in enumerate(buckets):
+        if not b: continue
+        pred=sum(x[0] for x in b)/len(b); obs=sum(x[1] for x in b)/len(b)
+        out.append(CalibrationBin(i/bins,(i+1)/bins,len(b),pred,obs,obs-pred))
+    n=sum(len(b) for b in buckets)
+    return CalibrationReport(tuple(out),brier/n if n else 0.0,logloss/n if n else 0.0)

@@ -1,32 +1,17 @@
-# Football Intelligence Engine — V1
+# Football Intelligence V1
 
-Purpose: live football data ingestion, multi-source validation, latency measurement, market-value analysis, and anomalous-odds detection.
+Paper-mode football market intelligence for 1xBet-visible prices.
 
-Markets:
-- Goals Over/Under
-- BTTS
-- 1X2 / Double Chance
-- Corners
-- Cards
-- Fouls
-- Throw-ins
+Pipeline:
+1. Ingest authorized/public football data.
+2. Normalize fixtures, team statistics, lineups/news signals and odds.
+3. Build pre-match features and baseline probabilities.
+4. Compare visible 1xBet prices against model probability and reference prices.
+5. Emit MODEL_VALUE, STALE_ODDS and anomaly alerts.
+6. Rank alerts and keep an auditable JSON history.
 
-V1 is analysis/paper mode only. It does not place bets and does not bypass market locks, rate limits, CAPTCHA, or other platform controls.
+Markets: goals/Over-Under, BTTS, 1X2, Double Chance, corners, cards, fouls and throw-ins.
 
-Core pipeline:
-SOURCE -> NORMALIZE -> TIMESTAMP -> CROSS-CHECK -> MODEL -> MARKET PRICE -> VALUE/ANOMALY ALERT -> LOG
+The baseline model is deliberately simple and must be calibrated/backtested before real-money use.
 
-Anomalous odds:
-- Compare current decimal odds with model-implied fair probability.
-- Compare current odds with recent/reference market prices when available.
-- Flag stale/outlier prices separately from genuine value.
-- Require independent event/data validation before an alert.
-- Never treat a high odd as proof of a winning outcome.
-
-Next integration targets:
-1. Licensed/authorized live-score/stat feeds.
-2. Authorized odds feed or user-supplied market snapshots.
-3. Persistent event/odds history.
-4. Backtest and paper-trading evaluator.
-5. Millisecond latency dashboard.
-
+Execution is OFF. No private 1xBet endpoints, lock bypass, CAPTCHA bypass, rate-limit bypass or account-control evasion. An apparent pricing error is only an anomaly signal; 1xBet rules allow obvious misprints/software errors to be voided.

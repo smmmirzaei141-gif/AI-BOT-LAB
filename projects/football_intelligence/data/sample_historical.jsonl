@@ -1,0 +1,2 @@
+{"event_id":"demo-1","home_xg":1.55,"away_xg":0.95,"odds":{"goals|over_1.5":1.45,"goals|over_2.5":2.05,"1x2|home":2.0,"1x2|draw":3.4,"1x2|away":3.8},"result":{"home_goals":2,"away_goals":0},"league":"demo"}
+{"event_id":"demo-2","home_xg":1.10,"away_xg":1.20,"odds":{"goals|over_1.5":1.55,"goals|over_2.5":2.15,"btts|yes":1.90,"1x2|draw":3.2},"result":{"home_goals":1,"away_goals":1},"league":"demo"}

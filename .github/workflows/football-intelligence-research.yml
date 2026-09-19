@@ -1,0 +1,36 @@
+name: Football Intelligence Research
+
+on:
+  workflow_dispatch:
+    inputs:
+      league:
+        description: "API-Football league ID"
+        required: true
+        default: "39"
+      season:
+        description: "Season year"
+        required: true
+        default: "2025"
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    env:
+      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Build historical dataset
+        run: |
+          mkdir -p projects/football_intelligence/data
+          cd projects/football_intelligence
+          PYTHONPATH=../.. python -m src.cli_real_dataset             --league "${{ inputs.league }}"             --season "${{ inputs.season }}"             --output data/real_dataset.jsonl
+      - name: Upload dataset artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-intelligence-dataset
+          path: projects/football_intelligence/data/real_dataset.jsonl
+          if-no-files-found: error
